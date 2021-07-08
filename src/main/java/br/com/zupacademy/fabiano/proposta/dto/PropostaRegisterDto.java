@@ -2,6 +2,7 @@ package br.com.zupacademy.fabiano.proposta.dto;
 
 import br.com.zupacademy.fabiano.proposta.modelo.Proposta;
 import br.com.zupacademy.fabiano.proposta.validation.Documento;
+import br.com.zupacademy.fabiano.proposta.validation.ValorUnico;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
@@ -12,6 +13,7 @@ public class PropostaRegisterDto {
     @NotNull
     @NotEmpty
     @Documento
+    @ValorUnico(instanceClass = Proposta.class, field = "documento")
     private String documento;
     @NotNull
     @NotEmpty
