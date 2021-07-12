@@ -29,6 +29,9 @@ public class Proposta {
     @NotNull
     @NotEmpty
     private String endereco;
+
+    private StatusProposta status;
+
     @NotNull
     @Positive
     private Double salario;
@@ -70,5 +73,13 @@ public class Proposta {
 
     public Double getSalario() {
         return salario;
+    }
+
+    public StatusProposta getStatus() {
+        return status;
+    }
+
+    public void setStatus(StatusProposta status) {
+        this.status = status;
     }
 }
