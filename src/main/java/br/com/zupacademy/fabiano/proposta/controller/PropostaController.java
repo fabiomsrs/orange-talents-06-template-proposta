@@ -6,6 +6,7 @@ import br.com.zupacademy.fabiano.proposta.modelo.Proposta;
 import br.com.zupacademy.fabiano.proposta.modelo.StatusProposta;
 import br.com.zupacademy.fabiano.proposta.repository.PropostaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,12 +27,15 @@ public class PropostaController {
     @Autowired
     PropostaRepository repository;
 
+    @Value("${solicitacao.host}")
+    private String urlSistemaSolicitacao;
+
+
     @PostMapping
     public ResponseEntity<Proposta> criar(@RequestBody @Valid PropostaRegisterDto dto, UriComponentsBuilder uriBuilder){
         Proposta proposta = dto.converter();
-
+        repository.save(proposta);
         RestTemplate restTemplate = new RestTemplate();
-        String url = "http://localhost:9999/api/solicitacao";
 
         Map<String, Object> body = new HashMap<>();
         body.put("documento", proposta.getDocumento());
@@ -44,14 +48,13 @@ public class PropostaController {
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
 
         try {
-            ResponseEntity<SolicitacaoDto> response = restTemplate.postForEntity(url,httpEntity,SolicitacaoDto.class);
+            ResponseEntity<SolicitacaoDto> response = restTemplate.postForEntity(this.urlSistemaSolicitacao,httpEntity,SolicitacaoDto.class);
             SolicitacaoDto solicitacaoDto = response.getBody();
             proposta.setStatus(StatusProposta.converter(solicitacaoDto.getResultadoSolicitacao()));
             repository.save(proposta);
         }catch (Exception e){
             System.out.println(e);
         }
-
         URI uri = uriBuilder.path("/apostas/{id}").buildAndExpand(proposta.getId()).toUri();
         return ResponseEntity.created(uri).body(proposta);
     }

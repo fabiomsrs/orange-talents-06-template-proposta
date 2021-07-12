@@ -8,6 +8,7 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
+import java.util.UUID;
 
 public class PropostaRegisterDto {
     @NotNull
@@ -42,6 +43,6 @@ public class PropostaRegisterDto {
     }
 
     public Proposta converter(){
-        return new Proposta(this.documento, this.email, this.nome, this.endereco, this.salario);
+        return new Proposta(UUID.randomUUID().toString(), this.documento, this.email, this.nome, this.endereco, this.salario);
     }
 }
