@@ -1,5 +1,6 @@
 package br.com.zupacademy.fabiano.proposta.controller;
 
+import br.com.zupacademy.fabiano.proposta.dto.ProdutoDetalheDto;
 import br.com.zupacademy.fabiano.proposta.dto.PropostaRegisterDto;
 import br.com.zupacademy.fabiano.proposta.dto.SolicitacaoDto;
 import br.com.zupacademy.fabiano.proposta.modelo.Proposta;
@@ -8,11 +9,7 @@ import br.com.zupacademy.fabiano.proposta.repository.PropostaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -20,6 +17,7 @@ import javax.validation.Valid;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/propostas")
@@ -57,5 +55,16 @@ public class PropostaController {
         }
         URI uri = uriBuilder.path("/apostas/{id}").buildAndExpand(proposta.getId()).toUri();
         return ResponseEntity.created(uri).body(proposta);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> detalheProduto(@PathVariable("id") String id){
+        Optional<Proposta> optionalProduto = repository.findById(id);
+
+        if(optionalProduto.isEmpty()){
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(new ProdutoDetalheDto(optionalProduto.get()));
     }
 }
