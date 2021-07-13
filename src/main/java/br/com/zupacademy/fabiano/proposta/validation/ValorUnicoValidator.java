@@ -31,10 +31,10 @@ public class ValorUnicoValidator implements ConstraintValidator<ValorUnico, Obje
                 .getResultList()
                 .isEmpty();
 
-        if(this.field.equals("documento") && !result){
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "documento ja cadastrado");
+        if(!result){
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "entidade ja cadastrada");
         }
 
-        return result;
+        return true;
     }
 }
