@@ -1,5 +1,15 @@
 version: '3'
 services:
+  app-service:
+    build:
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    restart: always
+    depends_on:
+      - db
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
 
   zookeeper:
     image: "confluentinc/cp-zookeeper:5.2.1"
@@ -21,6 +31,17 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  db:
+    image: mysql:8.0
+    volumes:
+      - mysql-volume:/var/lib/mysql
+    restart: always
+    ports:
+      - 3307:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql
+      MYSQL_DATABASE: proposta
 
   postgres:
     image: 'postgres:alpine'
@@ -138,3 +159,4 @@ volumes:
   grafana-volume:
   prometheus-volume:
   postgres-volume:
+  mysql-volume:
