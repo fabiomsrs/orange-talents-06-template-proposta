@@ -2,14 +2,9 @@ package br.com.zupacademy.fabiano.proposta.controller;
 
 import br.com.zupacademy.fabiano.proposta.dto.AvisoViagemRegisterDto;
 import br.com.zupacademy.fabiano.proposta.dto.BiometriaRegisterDto;
-import br.com.zupacademy.fabiano.proposta.modelo.AvisoViagem;
-import br.com.zupacademy.fabiano.proposta.modelo.Biometria;
-import br.com.zupacademy.fabiano.proposta.modelo.BloqueioCartao;
-import br.com.zupacademy.fabiano.proposta.modelo.Cartao;
-import br.com.zupacademy.fabiano.proposta.repository.AvisoViagemRepository;
-import br.com.zupacademy.fabiano.proposta.repository.BiometriaRepository;
-import br.com.zupacademy.fabiano.proposta.repository.BloqueioCartaoRepository;
-import br.com.zupacademy.fabiano.proposta.repository.CartaoRepository;
+import br.com.zupacademy.fabiano.proposta.dto.CarteiraRegisterDto;
+import br.com.zupacademy.fabiano.proposta.modelo.*;
+import br.com.zupacademy.fabiano.proposta.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -35,6 +30,9 @@ public class CartaoController {
 
     @Autowired
     CartaoRepository cartaoRepository;
+
+    @Autowired
+    CarteiraRepository carteiraRepository;
 
     @Autowired
     BloqueioCartaoRepository bloqueioCartaoRepository;
@@ -120,6 +118,42 @@ public class CartaoController {
                 avisoViagemRepository.save(avisoViagem);
                 URI uri = uriBuilder.path("/{id}/avisos-viagem").buildAndExpand(avisoViagem.getId()).toUri();
                 return ResponseEntity.created(uri).body(avisoViagem);
+            }catch (Exception e){
+                throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "requisição no sistema externo de cartões deu errado, tente novamente");
+            }
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/{id}/carteiras")
+    public ResponseEntity<?> criarCarteira(@PathVariable("id") Long id,
+                                          @RequestBody @Valid CarteiraRegisterDto dto,
+                                          UriComponentsBuilder uriBuilder){
+        Optional<Cartao> optionalCartao = cartaoRepository.findById(id);
+
+        if(optionalCartao.isPresent()){
+            Cartao cartao = optionalCartao.get();
+            Carteira carteira = dto.converter(cartao);
+            if(!carteiraRepository.findByCartaoAndTipoCarteira(cartao, carteira.getTipoCarteira()).isEmpty()){
+                throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "cartão ja cadastrado com essa carteira");
+            }
+
+            RestTemplate restTemplate = new RestTemplate();
+
+            Map<String, Object> body = new HashMap<>();
+            body.put("email", carteira.getEmail());
+            body.put("carteira", carteira.getTipoCarteira());
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+
+            try {
+                restTemplate.postForEntity(this.urlSistemaCartao + "/" + cartao.getNumeroCartao() + "/carteiras", httpEntity, String.class);
+                carteiraRepository.save(carteira);
+                URI uri = uriBuilder.path("/{id}/carteiras").buildAndExpand(carteira.getId()).toUri();
+                return ResponseEntity.created(uri).body(carteira);
             }catch (Exception e){
                 throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "requisição no sistema externo de cartões deu errado, tente novamente");
             }
