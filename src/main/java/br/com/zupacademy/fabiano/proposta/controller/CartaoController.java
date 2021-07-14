@@ -1,6 +1,7 @@
 package br.com.zupacademy.fabiano.proposta.controller;
 
 import br.com.zupacademy.fabiano.proposta.dto.BiometriaRegisterDto;
+import br.com.zupacademy.fabiano.proposta.dto.SolicitacaoDto;
 import br.com.zupacademy.fabiano.proposta.modelo.Biometria;
 import br.com.zupacademy.fabiano.proposta.modelo.BloqueioCartao;
 import br.com.zupacademy.fabiano.proposta.modelo.Cartao;
@@ -8,15 +9,18 @@ import br.com.zupacademy.fabiano.proposta.repository.BiometriaRepository;
 import br.com.zupacademy.fabiano.proposta.repository.BloqueioCartaoRepository;
 import br.com.zupacademy.fabiano.proposta.repository.CartaoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -30,6 +34,12 @@ public class CartaoController {
 
     @Autowired
     BloqueioCartaoRepository bloqueioCartaoRepository;
+
+    @Value("${cartao.host}")
+    private String urlSistemaCartao;
+
+    @Value("${sistema.nome}")
+    private String nomeSistema;
 
     @PostMapping("/{id}/biometrias")
     public ResponseEntity<?> criarBoemetria(@PathVariable("id") Long id, @RequestBody @Valid BiometriaRegisterDto dto, UriComponentsBuilder uriBuilder){
@@ -49,11 +59,27 @@ public class CartaoController {
         Optional<Cartao> optionalCartao = cartaoRepository.findById(id);
 
         if(optionalCartao.isPresent()){
-            if(bloqueioCartaoRepository.findByCartao(optionalCartao.get()).isEmpty()){
-                BloqueioCartao bloqueioCartao = new BloqueioCartao(userAgent,request.getRemoteAddr(),optionalCartao.get());
-                bloqueioCartaoRepository.save(bloqueioCartao);
-                URI uri = uriBuilder.path("/{id}/bloqueios").buildAndExpand(bloqueioCartao.getId()).toUri();
-                return ResponseEntity.created(uri).body(bloqueioCartao);
+            Cartao cartao = optionalCartao.get();
+            if(bloqueioCartaoRepository.findByCartao(cartao).isEmpty()){
+                RestTemplate restTemplate = new RestTemplate();
+
+                Map<String, Object> body = new HashMap<>();
+                body.put("sistemaResponsavel", this.nomeSistema);
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+
+                HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+
+                try {
+                    restTemplate.postForEntity(this.urlSistemaCartao + "/" + cartao.getNumeroCartao() + "/bloqueios", httpEntity, String.class);
+                    BloqueioCartao bloqueioCartao = new BloqueioCartao(userAgent,request.getRemoteAddr(),cartao);
+                    bloqueioCartaoRepository.save(bloqueioCartao);
+                    URI uri = uriBuilder.path("/{id}/bloqueios").buildAndExpand(bloqueioCartao.getId()).toUri();
+                    return ResponseEntity.created(uri).body(bloqueioCartao);
+                }catch (Exception e){
+                    throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "entidade ja cadastrada");
+                }
             }
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "entidade ja cadastrada");
         }
