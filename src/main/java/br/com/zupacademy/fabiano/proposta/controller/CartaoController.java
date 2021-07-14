@@ -12,6 +12,7 @@ import br.com.zupacademy.fabiano.proposta.repository.BloqueioCartaoRepository;
 import br.com.zupacademy.fabiano.proposta.repository.CartaoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -21,6 +22,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.net.URI;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -102,9 +104,25 @@ public class CartaoController {
         if(optionalCartao.isPresent()){
             Cartao cartao = optionalCartao.get();
             AvisoViagem avisoViagem = dto.converter(userAgent,request.getRemoteAddr(),cartao);
-            avisoViagemRepository.save(avisoViagem);
-            URI uri = uriBuilder.path("/{id}/avisos-viagem").buildAndExpand(avisoViagem.getId()).toUri();
-            return ResponseEntity.created(uri).body(avisoViagem);
+            RestTemplate restTemplate = new RestTemplate();
+
+            Map<String, Object> body = new HashMap<>();
+            body.put("destino", avisoViagem.getDestinho());
+            body.put("validoAte", avisoViagem.getTerminoViagem().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+
+            try {
+                restTemplate.postForEntity(this.urlSistemaCartao + "/" + cartao.getNumeroCartao() + "/avisos", httpEntity, String.class);
+                avisoViagemRepository.save(avisoViagem);
+                URI uri = uriBuilder.path("/{id}/avisos-viagem").buildAndExpand(avisoViagem.getId()).toUri();
+                return ResponseEntity.created(uri).body(avisoViagem);
+            }catch (Exception e){
+                throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "requisição no sistema externo de cartões deu errado, tente novamente");
+            }
         }
         return ResponseEntity.notFound().build();
     }
