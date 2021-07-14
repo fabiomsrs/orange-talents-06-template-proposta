@@ -1,10 +1,12 @@
 package br.com.zupacademy.fabiano.proposta.controller;
 
+import br.com.zupacademy.fabiano.proposta.dto.AvisoViagemRegisterDto;
 import br.com.zupacademy.fabiano.proposta.dto.BiometriaRegisterDto;
-import br.com.zupacademy.fabiano.proposta.dto.SolicitacaoDto;
+import br.com.zupacademy.fabiano.proposta.modelo.AvisoViagem;
 import br.com.zupacademy.fabiano.proposta.modelo.Biometria;
 import br.com.zupacademy.fabiano.proposta.modelo.BloqueioCartao;
 import br.com.zupacademy.fabiano.proposta.modelo.Cartao;
+import br.com.zupacademy.fabiano.proposta.repository.AvisoViagemRepository;
 import br.com.zupacademy.fabiano.proposta.repository.BiometriaRepository;
 import br.com.zupacademy.fabiano.proposta.repository.BloqueioCartaoRepository;
 import br.com.zupacademy.fabiano.proposta.repository.CartaoRepository;
@@ -34,6 +36,9 @@ public class CartaoController {
 
     @Autowired
     BloqueioCartaoRepository bloqueioCartaoRepository;
+
+    @Autowired
+    AvisoViagemRepository avisoViagemRepository;
 
     @Value("${cartao.host}")
     private String urlSistemaCartao;
@@ -82,6 +87,24 @@ public class CartaoController {
                 }
             }
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "entidade ja cadastrada");
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/{id}/avisos-viagem")
+    public ResponseEntity<?> criarAvisoViagem(@PathVariable("id") Long id,
+                                              HttpServletRequest request,
+                                              @RequestHeader(value = "User-Agent") String userAgent,
+                                              @RequestBody @Valid AvisoViagemRegisterDto dto,
+                                              UriComponentsBuilder uriBuilder){
+        Optional<Cartao> optionalCartao = cartaoRepository.findById(id);
+
+        if(optionalCartao.isPresent()){
+            Cartao cartao = optionalCartao.get();
+            AvisoViagem avisoViagem = dto.converter(userAgent,request.getRemoteAddr(),cartao);
+            avisoViagemRepository.save(avisoViagem);
+            URI uri = uriBuilder.path("/{id}/avisos-viagem").buildAndExpand(avisoViagem.getId()).toUri();
+            return ResponseEntity.created(uri).body(avisoViagem);
         }
         return ResponseEntity.notFound().build();
     }
