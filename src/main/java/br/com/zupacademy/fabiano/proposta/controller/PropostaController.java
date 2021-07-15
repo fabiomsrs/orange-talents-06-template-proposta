@@ -1,6 +1,6 @@
 package br.com.zupacademy.fabiano.proposta.controller;
 
-import br.com.zupacademy.fabiano.proposta.dto.ProdutoDetalheDto;
+import br.com.zupacademy.fabiano.proposta.dto.PropostaDetalheDto;
 import br.com.zupacademy.fabiano.proposta.dto.PropostaRegisterDto;
 import br.com.zupacademy.fabiano.proposta.dto.SolicitacaoDto;
 import br.com.zupacademy.fabiano.proposta.modelo.Proposta;
@@ -58,13 +58,13 @@ public class PropostaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> detalheProduto(@PathVariable("id") String id){
-        Optional<Proposta> optionalProduto = repository.findById(id);
+    public ResponseEntity<?> detalheProposta(@PathVariable("id") String id){
+        Optional<Proposta> optionalProposta = repository.findById(id);
 
-        if(optionalProduto.isEmpty()){
+        if(optionalProposta.isEmpty()){
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok(new ProdutoDetalheDto(optionalProduto.get()));
+        return ResponseEntity.ok(new PropostaDetalheDto(optionalProposta.get()));
     }
 }

@@ -11,7 +11,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 
-public class ProdutoDetalheDto {
+public class PropostaDetalheDto {
     private String documento;
     private String email;
     private String nome;
@@ -20,7 +20,7 @@ public class ProdutoDetalheDto {
     private Double salario;
     Cartao cartao;
 
-    public ProdutoDetalheDto(Proposta proposta) {
+    public PropostaDetalheDto(Proposta proposta) {
         this.documento = proposta.getDocumento();
         this.email = proposta.getEmail();
         this.nome = proposta.getNome();
