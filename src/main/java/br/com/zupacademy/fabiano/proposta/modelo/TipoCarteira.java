@@ -1,5 +1,6 @@
 package br.com.zupacademy.fabiano.proposta.modelo;
 
 public enum TipoCarteira {
-    PAYPAL;
+    PAYPAL,
+    SAMSUNG_PAY;
 }
