@@ -5,6 +5,7 @@ import br.com.zupacademy.fabiano.proposta.dto.BiometriaRegisterDto;
 import br.com.zupacademy.fabiano.proposta.dto.CarteiraRegisterDto;
 import br.com.zupacademy.fabiano.proposta.modelo.*;
 import br.com.zupacademy.fabiano.proposta.repository.*;
+import io.opentracing.Tracer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -46,8 +47,15 @@ public class CartaoController {
     @Value("${sistema.nome}")
     private String nomeSistema;
 
+    private final Tracer tracer;
+
+    public CartaoController(Tracer tracer) {
+        this.tracer = tracer;
+    }
+
     @PostMapping("/{id}/biometrias")
     public ResponseEntity<?> criarBoemetria(@PathVariable("id") Long id, @RequestBody @Valid BiometriaRegisterDto dto, UriComponentsBuilder uriBuilder){
+        tracer.activeSpan();
         Optional<Cartao> optionalCartao = cartaoRepository.findById(id);
 
         if(optionalCartao.isPresent()){
@@ -61,6 +69,7 @@ public class CartaoController {
 
     @PostMapping("/{id}/bloqueios")
     public ResponseEntity<?> criarBloqueio(@PathVariable("id") Long id, HttpServletRequest request, @RequestHeader(value = "User-Agent") String userAgent, UriComponentsBuilder uriBuilder){
+        tracer.activeSpan();
         Optional<Cartao> optionalCartao = cartaoRepository.findById(id);
 
         if(optionalCartao.isPresent()){
@@ -97,6 +106,7 @@ public class CartaoController {
                                               @RequestHeader(value = "User-Agent") String userAgent,
                                               @RequestBody @Valid AvisoViagemRegisterDto dto,
                                               UriComponentsBuilder uriBuilder){
+        tracer.activeSpan();
         Optional<Cartao> optionalCartao = cartaoRepository.findById(id);
 
         if(optionalCartao.isPresent()){
@@ -129,6 +139,7 @@ public class CartaoController {
     public ResponseEntity<?> criarCarteira(@PathVariable("id") Long id,
                                           @RequestBody @Valid CarteiraRegisterDto dto,
                                           UriComponentsBuilder uriBuilder){
+        tracer.activeSpan();
         Optional<Cartao> optionalCartao = cartaoRepository.findById(id);
 
         if(optionalCartao.isPresent()){

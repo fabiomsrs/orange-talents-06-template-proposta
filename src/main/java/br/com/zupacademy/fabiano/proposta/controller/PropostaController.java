@@ -6,9 +6,12 @@ import br.com.zupacademy.fabiano.proposta.dto.SolicitacaoDto;
 import br.com.zupacademy.fabiano.proposta.modelo.Proposta;
 import br.com.zupacademy.fabiano.proposta.modelo.StatusProposta;
 import br.com.zupacademy.fabiano.proposta.repository.PropostaRepository;
+import io.opentracing.Span;
+import io.opentracing.Tracer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -28,9 +31,15 @@ public class PropostaController {
     @Value("${solicitacao.host}")
     private String urlSistemaSolicitacao;
 
+    private final Tracer tracer;
+
+    public PropostaController(Tracer tracer) {
+        this.tracer = tracer;
+    }
 
     @PostMapping
     public ResponseEntity<Proposta> criar(@RequestBody @Valid PropostaRegisterDto dto, UriComponentsBuilder uriBuilder){
+        tracer.activeSpan();
         Proposta proposta = dto.converter();
         repository.save(proposta);
         RestTemplate restTemplate = new RestTemplate();
@@ -59,6 +68,7 @@ public class PropostaController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> detalheProposta(@PathVariable("id") String id){
+        tracer.activeSpan();
         Optional<Proposta> optionalProposta = repository.findById(id);
 
         if(optionalProposta.isEmpty()){
