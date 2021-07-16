@@ -15,7 +15,6 @@ public class Proposta {
     private String id;
     @NotNull
     @NotEmpty
-    @Documento
     private String documento;
     @NotNull
     @NotEmpty
@@ -34,13 +33,13 @@ public class Proposta {
     private Double salario;
     @OneToOne
     @JoinColumn(unique = true)
-    Cartao cartao;
+    private Cartao cartao;
 
     public Proposta() {
     }
 
     public Proposta(@NotNull String id,
-                    @NotNull @NotEmpty @Documento String documento,
+                    @NotNull @NotEmpty String documento,
                     @NotNull @NotEmpty @Email String email,
                     @NotNull @NotEmpty String nome,
                     @NotNull @NotEmpty String endereco,

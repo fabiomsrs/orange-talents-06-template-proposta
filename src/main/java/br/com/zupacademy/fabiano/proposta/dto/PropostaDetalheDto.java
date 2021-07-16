@@ -3,13 +3,7 @@ package br.com.zupacademy.fabiano.proposta.dto;
 import br.com.zupacademy.fabiano.proposta.modelo.Cartao;
 import br.com.zupacademy.fabiano.proposta.modelo.Proposta;
 import br.com.zupacademy.fabiano.proposta.modelo.StatusProposta;
-import br.com.zupacademy.fabiano.proposta.validation.Documento;
-
-import javax.persistence.*;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Positive;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 
 public class PropostaDetalheDto {
     private String documento;
@@ -20,8 +14,8 @@ public class PropostaDetalheDto {
     private Double salario;
     Cartao cartao;
 
-    public PropostaDetalheDto(Proposta proposta) {
-        this.documento = proposta.getDocumento();
+    public PropostaDetalheDto(Proposta proposta, TextEncryptor encryptor) {
+        this.documento = encryptor.decrypt(proposta.getDocumento());
         this.email = proposta.getEmail();
         this.nome = proposta.getNome();
         this.endereco = proposta.getEndereco();

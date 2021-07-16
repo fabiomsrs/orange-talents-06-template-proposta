@@ -3,6 +3,7 @@ package br.com.zupacademy.fabiano.proposta.dto;
 import br.com.zupacademy.fabiano.proposta.modelo.Proposta;
 import br.com.zupacademy.fabiano.proposta.validation.Documento;
 import br.com.zupacademy.fabiano.proposta.validation.ValorUnico;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
@@ -42,7 +43,12 @@ public class PropostaRegisterDto {
         this.salario = salario;
     }
 
-    public Proposta converter(){
-        return new Proposta(UUID.randomUUID().toString(), this.documento, this.email, this.nome, this.endereco, this.salario);
+    public Proposta converter(TextEncryptor encryptor){
+        return new Proposta(UUID.randomUUID().toString(),
+                encryptor.encrypt(this.documento),
+                this.email,
+                this.nome,
+                this.endereco,
+                this.salario);
     }
 }

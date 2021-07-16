@@ -6,12 +6,15 @@ import br.com.zupacademy.fabiano.proposta.dto.SolicitacaoDto;
 import br.com.zupacademy.fabiano.proposta.modelo.Proposta;
 import br.com.zupacademy.fabiano.proposta.modelo.StatusProposta;
 import br.com.zupacademy.fabiano.proposta.repository.PropostaRepository;
-import io.opentracing.Span;
 import io.opentracing.Tracer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.encrypt.Encryptors;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -30,6 +33,8 @@ public class PropostaController {
 
     @Value("${solicitacao.host}")
     private String urlSistemaSolicitacao;
+    @Value("${encryptor.salt}")
+    private String salt;
 
     private final Tracer tracer;
 
@@ -40,12 +45,13 @@ public class PropostaController {
     @PostMapping
     public ResponseEntity<Proposta> criar(@RequestBody @Valid PropostaRegisterDto dto, UriComponentsBuilder uriBuilder){
         tracer.activeSpan();
-        Proposta proposta = dto.converter();
+        TextEncryptor encryptor = Encryptors.text("password", this.salt);
+        Proposta proposta = dto.converter(encryptor);
         repository.save(proposta);
         RestTemplate restTemplate = new RestTemplate();
 
         Map<String, Object> body = new HashMap<>();
-        body.put("documento", proposta.getDocumento());
+        body.put("documento", encryptor.decrypt(proposta.getDocumento()));
         body.put("nome", proposta.getNome());
         body.put("idProposta", proposta.getId());
 
@@ -68,6 +74,7 @@ public class PropostaController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> detalheProposta(@PathVariable("id") String id){
+        TextEncryptor encryptor = Encryptors.text("password", this.salt);
         tracer.activeSpan();
         Optional<Proposta> optionalProposta = repository.findById(id);
 
@@ -75,6 +82,6 @@ public class PropostaController {
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok(new PropostaDetalheDto(optionalProposta.get()));
+        return ResponseEntity.ok(new PropostaDetalheDto(optionalProposta.get(), encryptor));
     }
 }
